@@ -45,6 +45,7 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.2.1")
     implementation("androidx.compose.material:material:1.2.1")
     implementation("androidx.core:core-ktx:1.9.0")
+    implementation("com.google.accompanist:accompanist-pager:0.26.5-rc")
 }
 
 afterEvaluate {
