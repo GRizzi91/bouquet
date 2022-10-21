@@ -24,6 +24,7 @@ internal fun PdfImage(
                 scaleX = gld.scale
                 scaleY = gld.scale
                 translationX = gld.translationX
+                translationY = gld.translationY
             }
     )
 }
