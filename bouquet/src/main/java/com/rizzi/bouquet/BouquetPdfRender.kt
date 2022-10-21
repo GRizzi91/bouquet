@@ -13,7 +13,8 @@ import kotlinx.coroutines.sync.withLock
 internal class BouquetPdfRender(
     private val fileDescriptor: ParcelFileDescriptor,
     val width: Int,
-    val height: Int
+    val height: Int,
+    val portrait: Boolean
 ) {
     private val pdfRenderer = PdfRenderer(fileDescriptor)
     val pageCount get() = pdfRenderer.pageCount
@@ -27,7 +28,8 @@ internal class BouquetPdfRender(
             pdfRenderer = pdfRenderer,
             coroutineScope = coroutineScope,
             width = width,
-            height = height
+            height = height,
+            portrait = portrait
         )
     }
 
@@ -43,16 +45,27 @@ internal class BouquetPdfRender(
         val pdfRenderer: PdfRenderer,
         val coroutineScope: CoroutineScope,
         width: Int,
-        height: Int
+        height: Int,
+        portrait: Boolean
     ) {
         val dimension = pdfRenderer.openPage(index).let {
-            val h = it.height * (width.toFloat() / it.width)
-            val dim = Dimension(
-                height = h.toInt(),
-                width = width
-            )
-            it.close()
-            dim
+            if (portrait) {
+                val h = it.height * (width.toFloat() / it.width)
+                val dim = Dimension(
+                    height = h.toInt(),
+                    width = width
+                )
+                it.close()
+                dim
+            } else {
+                val w = it.width * (height.toFloat() / it.height)
+                val dim = Dimension(
+                    height = height,
+                    width = w.toInt()
+                )
+                it.close()
+                dim
+            }
         }
 
         val stateFlow = MutableStateFlow(createBlankBitmap())

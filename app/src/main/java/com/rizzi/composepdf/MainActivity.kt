@@ -24,9 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ShareCompat
 import androidx.core.content.FileProvider
-import com.rizzi.bouquet.PdfReaderState
-import com.rizzi.bouquet.PDFReader
-import com.rizzi.bouquet.ResourceType
+import com.rizzi.bouquet.*
 import com.rizzi.composepdf.ui.theme.ComposePDFTheme
 import java.io.File
 
@@ -79,7 +77,11 @@ class MainActivity : ComponentActivity() {
                         Box(modifier = Modifier.padding(padding)) {
                             when (val actualState = state.value) {
                                 null -> SelectionView()
-                                else -> PDFView(
+                                is VerticalPdfReaderState -> PDFView(
+                                    pdfState = actualState,
+                                    scaffoldState = scaffoldState
+                                )
+                                is HorizontalPdfReaderState -> HPDFView(
                                     pdfState = actualState,
                                     scaffoldState = scaffoldState
                                 )
@@ -175,18 +177,39 @@ class MainActivity : ComponentActivity() {
             ) {
                 openDocumentPicker()
             }
+            Row(
+                modifier = Modifier
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(text = "List view")
+                Spacer(modifier = Modifier.width(16.dp))
+                Switch(
+                    checked = viewModel.switchState.value,
+                    onCheckedChange = {
+                        viewModel.switchState.value = it
+                    },
+                    colors = SwitchDefaults.colors(
+                        uncheckedThumbColor = MaterialTheme.colors.secondaryVariant,
+                        uncheckedTrackColor = MaterialTheme.colors.secondaryVariant,
+                        uncheckedTrackAlpha = 0.54f
+                    )
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(text = "Pager view")
+            }
         }
     }
 
     @Composable
     fun PDFView(
-        pdfState: PdfReaderState,
+        pdfState: VerticalPdfReaderState,
         scaffoldState: ScaffoldState
     ) {
         Box(
             contentAlignment = Alignment.TopStart
         ) {
-            PDFReader(
+            VerticalPDFReader(
                 state = pdfState,
                 modifier = Modifier
                     .fillMaxSize()
@@ -239,6 +262,81 @@ class MainActivity : ComponentActivity() {
                                 top = 4.dp
                             )
                         )
+                    }
+                }
+            }
+            LaunchedEffect(key1 = pdfState.error) {
+                pdfState.error?.let {
+                    scaffoldState.snackbarHostState.showSnackbar(
+                        message = it.message ?: "Error"
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun HPDFView(
+        pdfState: HorizontalPdfReaderState,
+        scaffoldState: ScaffoldState
+    ) {
+        Box(
+            contentAlignment = Alignment.TopStart
+        ) {
+            HorizontalPDFReader(
+                state = pdfState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.Gray)
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                LinearProgressIndicator(
+                    progress = pdfState.loadPercent / 100f,
+                    color = Color.Red,
+                    backgroundColor = Color.Green,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row {
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(
+                        modifier = Modifier
+                            .background(
+                                color = MaterialTheme.colors.surface.copy(alpha = 0.5f),
+                                shape = MaterialTheme.shapes.medium
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Page: ${pdfState.currentPage}/${pdfState.pdfPageCount}",
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                end = 8.dp,
+                                bottom = 4.dp,
+                                top = 8.dp
+                            )
+                        )
+                        Text(
+                            text = if (pdfState.isScrolling) {
+                                "Scrolling"
+                            } else {
+                                "Stationary"
+                            },
+                            color = if (pdfState.isScrolling) {
+                                MaterialTheme.colors.onSurface
+                            } else {
+                                MaterialTheme.colors.error
+                            },
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                end = 8.dp,
+                                bottom = 8.dp,
+                                top = 4.dp
+                            )
+                        )
+                        Text(text = "${pdfState.scale}")
                     }
                 }
             }

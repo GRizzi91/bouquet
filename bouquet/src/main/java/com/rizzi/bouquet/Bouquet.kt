@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,8 +30,8 @@ import java.io.IOException
 import java.net.URL
 
 @Composable
-fun PDFReader(
-    state: PdfReaderState,
+fun VerticalPDFReader(
+    state: VerticalPdfReaderState,
     modifier: Modifier
 ) {
     BoxWithConstraints(
@@ -46,10 +48,11 @@ fun PDFReader(
                 ctx,
                 state,
                 constraints.maxWidth,
-                constraints.maxHeight
+                constraints.maxHeight,
+                true
             )
             onDispose {
-                state.pdfRender?.close()
+                state.close()
             }
         }
         state.pdfRender?.let { pdf ->
@@ -70,7 +73,7 @@ fun PDFReader(
                                         minimumValue = -maxT / 2,
                                         maximumValue = maxT / 2
                                     ),
-                                    y = state.offset.y + pan.y
+                                    y = 0f
                                 )
                             } else {
                                 Offset(0f, 0f)
@@ -122,23 +125,125 @@ fun PDFReader(
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun HorizontalPDFReader(
+    state: HorizontalPdfReaderState,
+    modifier: Modifier
+) {
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.TopCenter
+    ) {
+        val ctx = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+        val density = LocalDensity.current
+        DisposableEffect(key1 = Unit) {
+            load(
+                coroutineScope,
+                ctx,
+                state,
+                constraints.maxWidth,
+                constraints.maxHeight,
+                constraints.maxHeight > constraints.maxWidth
+            )
+            onDispose {
+                state.close()
+            }
+        }
+        state.pdfRender?.let { pdf ->
+            HorizontalPager(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures(true) { centroid, pan, zoom, rotation ->
+                            if (!state.mIsZoomEnable) return@detectTransformGestures
+                            val nScale = (state.scale * zoom)
+                                .coerceAtLeast(1f)
+                                .coerceAtMost(3f)
+                            val nOffset = if (nScale > 1f) {
+                                val maxT = constraints.maxWidth * (state.scale - 1)
+                                val maxH = constraints.maxHeight * (state.scale - 1)
+                                Offset(
+                                    x = (state.offset.x + pan.x).coerceIn(
+                                        minimumValue = -maxT / 2,
+                                        maximumValue = maxT / 2
+                                    ),
+                                    y = (state.offset.y + pan.y).coerceIn(
+                                        minimumValue = -maxH / 2,
+                                        maximumValue = maxH / 2
+                                    )
+                                )
+                            } else {
+                                Offset(0f, 0f)
+                            }
+                            state.mScale = nScale
+                            state.offset = nOffset
+                        }
+                    },
+                count = state.pdfPageCount,
+                state = state.pagerState,
+                userScrollEnabled = state.scale == 1f
+            ) { page ->
+                val bitmapState = pdf.pageLists[page].stateFlow.collectAsState()
+                DisposableEffect(key1 = Unit) {
+                    pdf.pageLists[page].load()
+                    onDispose {
+                        pdf.pageLists[page].recycle()
+                    }
+                }
+                val height = bitmapState.value.height * state.scale
+                val width = constraints.maxWidth * state.scale
+                PdfImage(
+                    graphicsLayerData = {
+                        if (page == state.currentPage) {
+                            GraphicsLayerData(
+                                scale = state.scale,
+                                translationX = state.offset.x,
+                                translationY = state.offset.y
+                            )
+                        } else {
+                            GraphicsLayerData(
+                                scale = 1f,
+                                translationX = 0f,
+                                translationY = 0f
+                            )
+                        }
+                    },
+                    bitmap = {
+                        bitmapState.value.asImageBitmap()
+                    },
+                    dimension = {
+                        Dimension(
+                            height = with(density) { height.toDp() },
+                            width = with(density) { width.toDp() }
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+
 private fun load(
     coroutineScope: CoroutineScope,
     context: Context,
     state: PdfReaderState,
     width: Int,
     height: Int,
+    portrait: Boolean
 ) {
     runCatching {
         if (state.isLoaded) {
             val pFD =
                 ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
-            state.pdfRender = BouquetPdfRender(pFD, width, height)
+            state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
         } else {
             when (val res = state.resource) {
                 is ResourceType.Local -> {
                     context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
-                        state.pdfRender = BouquetPdfRender(it, width, height)
+                        state.pdfRender = BouquetPdfRender(it, width, height, portrait)
                     } ?: throw IOException("File not found")
                 }
                 is ResourceType.Remote -> {
@@ -171,7 +276,7 @@ private fun load(
                                     file,
                                     ParcelFileDescriptor.MODE_READ_ONLY
                                 )
-                                state.pdfRender = BouquetPdfRender(pFD, width, height)
+                                state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
                                 state.mFile = file
                             }.onFailure {
                                 state.mError = it
@@ -187,7 +292,7 @@ private fun load(
                                 file,
                                 ParcelFileDescriptor.MODE_READ_ONLY
                             )
-                            state.pdfRender = BouquetPdfRender(pFD, width, height)
+                            state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
                             state.mFile = file
                         }.onFailure {
                             state.mError = it
