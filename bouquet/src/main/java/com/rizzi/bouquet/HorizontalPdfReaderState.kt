@@ -11,9 +11,10 @@ import com.google.accompanist.pager.PagerState
 @OptIn(ExperimentalPagerApi::class)
 class HorizontalPdfReaderState(
     resource: ResourceType,
-    isZoomEnable: Boolean = false,
-    internal val pagerState: PagerState = PagerState()
+    isZoomEnable: Boolean = false
 ) : PdfReaderState(resource, isZoomEnable) {
+
+    internal var pagerState: PagerState = PagerState()
 
     override val currentPage: Int
         get() = pagerState.currentPage
@@ -38,9 +39,10 @@ class HorizontalPdfReaderState(
             restore = {
                 HorizontalPdfReaderState(
                     it[0] as ResourceType,
-                    it[1] as Boolean,
-                    PagerState(currentPage = it[2] as Int)
-                )
+                    it[1] as Boolean
+                ).apply {
+                    pagerState = PagerState(currentPage = it[2] as Int)
+                }
             }
         )
     }
