@@ -1,7 +1,5 @@
 # Bouquet - Jetpack Compose PDF reader
 
-[![](https://jitpack.io/v/GRizzi91/Bouquet.svg)](https://jitpack.io/#GRizzi91/Bouquet)
-
 Bouquet is a PDF reader library written completely in Jetpack Compose, this was created using [PDFRender](https://developer.android.com/reference/android/graphics/pdf/PdfRenderer) and coroutine.
 Currently the library only supports the vertical list via LazyColumn, in future releases a horizontal and vertical scrolling ViewPager will be added.
 The library is currently in alpha version, the library is fully functional but some method signatures may change.
@@ -28,14 +26,13 @@ Add it in your root build.gradle at the end of repositories:
 
 	allprojects {
 		repositories {
-			...
-			maven { url 'https://jitpack.io' }
+			mavenCentral()
 		}
 	}
 Step 3. Add the dependency
 
 	dependencies {
-	        implementation 'com.github.GRizzi91:Bouquet:1.0.0-alpha01'
+	        implementation 'io.github.grizzi91:bouquet:1.0.0'
 	}
 
 Step 4. You can use the library by creating the state in a Composable
