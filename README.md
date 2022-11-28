@@ -21,7 +21,7 @@ Step 1. Add `INTERNET` permissions on your AndroidManifest.xml
 <uses-permission android:name="android.permission.INTERNET" />
 ```
 
-Step 2. Add the JitPack repository to your build file
+Step 2. Add the MavenCentral repository to your build file
 Add it in your root build.gradle at the end of repositories:
 
 	allprojects {
