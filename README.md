@@ -2,7 +2,6 @@
 
 Bouquet is a PDF reader library written completely in Jetpack Compose, this was created using [PDFRender](https://developer.android.com/reference/android/graphics/pdf/PdfRenderer) and coroutine.
 Currently the library only supports the vertical list via LazyColumn, in future releases a horizontal and vertical scrolling ViewPager will be added.
-The library is currently in alpha version, the library is fully functional but some method signatures may change.
 
 ## Features
 
