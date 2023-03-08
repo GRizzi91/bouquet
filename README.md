@@ -31,7 +31,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 3. Add the dependency
 
 	dependencies {
-	        implementation 'io.github.grizzi91:bouquet:1.0.0'
+	        implementation 'io.github.grizzi91:bouquet:1.0.1'
 	}
 
 Step 4. You can use the library by creating the state in a Composable
