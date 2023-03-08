@@ -34,9 +34,11 @@ internal class BouquetPdfRender(
     }
 
     fun close() {
-        coroutineScope.cancel()
-        pdfRenderer.close()
-        fileDescriptor.close()
+        coroutineScope.launch {
+            pageLists.forEach { it.job?.cancelAndJoin() }
+            pdfRenderer.close()
+            fileDescriptor.close()
+        }
     }
 
     class Page(
@@ -48,14 +50,13 @@ internal class BouquetPdfRender(
         height: Int,
         portrait: Boolean
     ) {
-        val dimension = pdfRenderer.openPage(index).let {
+        val dimension = pdfRenderer.openPage(index).use {
             if (portrait) {
                 val h = it.height * (width.toFloat() / it.width)
                 val dim = Dimension(
                     height = h.toInt(),
                     width = width
                 )
-                it.close()
                 dim
             } else {
                 val w = it.width * (height.toFloat() / it.height)
@@ -63,10 +64,11 @@ internal class BouquetPdfRender(
                     height = height,
                     width = w.toInt()
                 )
-                it.close()
                 dim
             }
         }
+
+        var job: Job? = null
 
         val stateFlow = MutableStateFlow(createBlankBitmap())
 
@@ -74,17 +76,17 @@ internal class BouquetPdfRender(
 
         fun load() {
             if (!isLoaded) {
-                coroutineScope.launch {
+                job = coroutineScope.launch {
                     mutex.withLock {
                         val newBitmap = createBlankBitmap()
-                        val currentPage = pdfRenderer.openPage(index)
-                        currentPage.render(
-                            newBitmap,
-                            null,
-                            null,
-                            PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
-                        )
-                        currentPage.close()
+                        pdfRenderer.openPage(index).use { currentPage ->
+                            currentPage.render(
+                                newBitmap,
+                                null,
+                                null,
+                                PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
+                            )
+                        }
                         isLoaded = true
                         stateFlow.emit(newBitmap)
                     }
