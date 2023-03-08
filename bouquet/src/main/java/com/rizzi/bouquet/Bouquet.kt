@@ -242,9 +242,14 @@ private fun load(
         } else {
             when (val res = state.resource) {
                 is ResourceType.Local -> {
-                    context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
-                        state.pdfRender = BouquetPdfRender(it, width, height, portrait)
-                    } ?: throw IOException("File not found")
+                    coroutineScope.launch {
+                        context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
+                            state.pdfRender = BouquetPdfRender(it, width, height, portrait)
+                            state.mFile = context.uriToFile(res.uri)
+                        } ?: run {
+                            state.mError = IOException("File not found")
+                        }
+                    }
                 }
                 is ResourceType.Remote -> {
                     coroutineScope.launch {
