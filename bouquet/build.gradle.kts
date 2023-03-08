@@ -42,21 +42,8 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.ui:ui:1.2.1")
-    implementation("androidx.compose.material:material:1.2.1")
+    implementation("androidx.compose.ui:ui:1.3.3")
+    implementation("androidx.compose.material:material:1.3.1")
     implementation("androidx.core:core-ktx:1.9.0")
-    implementation("com.google.accompanist:accompanist-pager:0.26.5-rc")
-}
-
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                from(components["release"])
-                groupId = "com.github.GRizzi91"
-                artifactId = "bouquet"
-                version = "1.0"
-            }
-        }
-    }
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
 }
