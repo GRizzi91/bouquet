@@ -92,14 +92,14 @@ fun VerticalPDFReader(
                 state = lazyState
             ) {
                 items(pdf.pageCount) {
-                    val bitmapState = pdf.pageLists[it].stateFlow.collectAsState()
+                    val pageContent = pdf.pageLists[it].stateFlow.collectAsState().value
                     DisposableEffect(key1 = Unit) {
                         pdf.pageLists[it].load()
                         onDispose {
                             pdf.pageLists[it].recycle()
                         }
                     }
-                    val height = bitmapState.value.height * state.scale
+                    val height = pageContent.bitmap.height * state.scale
                     val width = constraints.maxWidth * state.scale
                     PdfImage(
                         graphicsLayerData = {
@@ -110,8 +110,9 @@ fun VerticalPDFReader(
                             )
                         },
                         bitmap = {
-                            bitmapState.value.asImageBitmap()
+                            pageContent.bitmap.asImageBitmap()
                         },
+                        contentDescription = pageContent.contentDescription,
                         dimension = {
                             Dimension(
                                 height = with(density) { height.toDp() },
@@ -185,14 +186,14 @@ fun HorizontalPDFReader(
                 state = state.pagerState,
                 userScrollEnabled = state.scale == 1f
             ) { page ->
-                val bitmapState = pdf.pageLists[page].stateFlow.collectAsState()
+                val pageContent = pdf.pageLists[page].stateFlow.collectAsState().value
                 DisposableEffect(key1 = Unit) {
                     pdf.pageLists[page].load()
                     onDispose {
                         pdf.pageLists[page].recycle()
                     }
                 }
-                val height = bitmapState.value.height * state.scale
+                val height = pageContent.bitmap.height * state.scale
                 val width = constraints.maxWidth * state.scale
                 PdfImage(
                     graphicsLayerData = {
@@ -210,9 +211,8 @@ fun HorizontalPDFReader(
                             )
                         }
                     },
-                    bitmap = {
-                        bitmapState.value.asImageBitmap()
-                    },
+                    bitmap = { pageContent.bitmap.asImageBitmap() },
+                    contentDescription = pageContent.contentDescription,
                     dimension = {
                         Dimension(
                             height = with(density) { height.toDp() },
@@ -236,15 +236,19 @@ private fun load(
 ) {
     runCatching {
         if (state.isLoaded) {
-            val pFD =
-                ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
-            state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
+            coroutineScope.launch {
+                val pFD =
+                    ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                val textForEachPage = getTextByPage(context, pFD)
+                state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+            }
         } else {
             when (val res = state.resource) {
                 is ResourceType.Local -> {
                     coroutineScope.launch {
                         context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
-                            state.pdfRender = BouquetPdfRender(it, width, height, portrait)
+                            val textForEachPage = getTextByPage(context, it)
+                            state.pdfRender = BouquetPdfRender(it, textForEachPage, width, height, portrait)
                             state.mFile = context.uriToFile(res.uri)
                         } ?: run {
                             state.mError = IOException("File not found")
@@ -281,7 +285,8 @@ private fun load(
                                     file,
                                     ParcelFileDescriptor.MODE_READ_ONLY
                                 )
-                                state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
+                                val textForEachPage = getTextByPage(context, pFD)
+                                state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                                 state.mFile = file
                             }.onFailure {
                                 state.mError = it
@@ -297,7 +302,8 @@ private fun load(
                                 file,
                                 ParcelFileDescriptor.MODE_READ_ONLY
                             )
-                            state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
+                            val textForEachPage = getTextByPage(context, pFD)
+                            state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                             state.mFile = file
                         }.onFailure {
                             state.mError = it

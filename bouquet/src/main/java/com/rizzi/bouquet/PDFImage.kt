@@ -11,11 +11,12 @@ import androidx.compose.ui.layout.ContentScale
 internal fun PdfImage(
     dimension: () -> Dimension,
     graphicsLayerData: () -> GraphicsLayerData,
-    bitmap: () -> ImageBitmap
+    bitmap: () -> ImageBitmap,
+    contentDescription: String = "",
 ) {
     Image(
         bitmap = bitmap(),
-        contentDescription = "",
+        contentDescription = contentDescription,
         contentScale = ContentScale.None,
         modifier = Modifier
             .size(dimension())
