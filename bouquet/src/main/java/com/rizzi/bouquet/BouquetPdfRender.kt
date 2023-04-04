@@ -26,7 +26,7 @@ internal class BouquetPdfRender(
         Page(
             mutex = mutex,
             index = it,
-            textForPage = textForEachPage[it],
+            textForPage = textForEachPage.getOrElse(it) {""},
             pdfRenderer = pdfRenderer,
             coroutineScope = coroutineScope,
             width = width,

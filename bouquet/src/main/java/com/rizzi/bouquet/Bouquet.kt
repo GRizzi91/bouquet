@@ -239,7 +239,7 @@ private fun load(
             coroutineScope.launch {
                 val pFD =
                     ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                val textForEachPage = getTextByPage(context, pFD)
+                val textForEachPage = if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
                 state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
             }
         } else {
@@ -247,7 +247,9 @@ private fun load(
                 is ResourceType.Local -> {
                     coroutineScope.launch {
                         context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
-                            val textForEachPage = getTextByPage(context, it)
+                            val textForEachPage = if (state.isAccessibleEnable) {
+                                getTextByPage(context, it)
+                            } else emptyList()
                             state.pdfRender = BouquetPdfRender(it, textForEachPage, width, height, portrait)
                             state.mFile = context.uriToFile(res.uri)
                         } ?: run {
@@ -285,7 +287,9 @@ private fun load(
                                     file,
                                     ParcelFileDescriptor.MODE_READ_ONLY
                                 )
-                                val textForEachPage = getTextByPage(context, pFD)
+                                val textForEachPage = if (state.isAccessibleEnable) {
+                                    getTextByPage(context, pFD)
+                                } else emptyList()
                                 state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                                 state.mFile = file
                             }.onFailure {
@@ -302,7 +306,9 @@ private fun load(
                                 file,
                                 ParcelFileDescriptor.MODE_READ_ONLY
                             )
-                            val textForEachPage = getTextByPage(context, pFD)
+                            val textForEachPage = if (state.isAccessibleEnable) {
+                                getTextByPage(context, pFD)
+                            } else emptyList()
                             state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                             state.mFile = file
                         }.onFailure {
