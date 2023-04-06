@@ -8,8 +8,9 @@ import java.io.File
 
 abstract class PdfReaderState(
     val resource: ResourceType,
-    isZoomEnable: Boolean = false
-) {
+    isZoomEnable: Boolean = false,
+    val isAccessibleEnable: Boolean = false,
+    ) {
     internal var mError by mutableStateOf<Throwable?>(null)
     val error: Throwable?
         get() = mError

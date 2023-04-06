@@ -1,7 +1,7 @@
 # Bouquet - Jetpack Compose PDF reader
 
 Bouquet is a PDF reader library written completely in Jetpack Compose, this was created using [PDFRender](https://developer.android.com/reference/android/graphics/pdf/PdfRenderer) and coroutine.
-Currently the library only supports the vertical list via LazyColumn, in future releases a horizontal and vertical scrolling ViewPager will be added.
+The library supports both horizontal and vertical viewing.
 
 ## Features
 
@@ -31,13 +31,22 @@ Add it in your root build.gradle at the end of repositories:
 Step 3. Add the dependency
 
 	dependencies {
-	        implementation 'io.github.grizzi91:bouquet:1.0.0'
+	        implementation 'io.github.grizzi91:bouquet:1.0.1'
 	}
 
 Step 4. You can use the library by creating the state in a Composable
+This is for portrait viewing
 
 ```kotlin
-val pdfState = rememberPdfReaderState(
+val pdfState = rememberVerticalPdfReaderState(
+	resource = ResourceType.Remote("https://myreport.altervista.org/Lorem_Ipsum.pdf"),
+	isZoomEnable = true
+)
+```
+This is for landscape viewing
+
+```kotlin
+val pdfState = rememberHorizontalPdfReaderState(
 	resource = ResourceType.Remote("https://myreport.altervista.org/Lorem_Ipsum.pdf"),
 	isZoomEnable = true
 )
@@ -48,7 +57,12 @@ Or you can host the state in a ViewModel
 ```kotlin
 class BouquetViewModel : ViewModel() {
   
-    val pdfReaderState = PdfReaderState(
+    val pdfHorizontalReaderState = HorizontalPdfReaderState(
+        resource = ResourceType.Remote("https://myreport.altervista.org/Lorem_Ipsum.pdf"),
+	isZoomEnable = true
+    )
+    
+    val pdfVerticallReaderState = VerticalPdfReaderState(
         resource = ResourceType.Remote("https://myreport.altervista.org/Lorem_Ipsum.pdf"),
 	isZoomEnable = true
     )
@@ -57,7 +71,18 @@ class BouquetViewModel : ViewModel() {
 Step 5. Then pass the state to the PDFReader function
 
 ```kotlin
-PDFReader(
+VerticalPDFReader(
+	state = pdfState,
+	modifier = Modifier
+		.fillMaxSize()
+		.background(color = Color.Gray)
+)
+```
+
+or
+
+```kotlin
+HorizontalPDFReader(
 	state = pdfState,
 	modifier = Modifier
 		.fillMaxSize()
