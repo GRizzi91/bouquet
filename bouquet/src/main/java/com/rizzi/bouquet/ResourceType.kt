@@ -9,7 +9,10 @@ sealed class ResourceType {
     data class Local(val uri: Uri) : ResourceType(), Parcelable
 
     @Parcelize
-    data class Remote(val url: String) : ResourceType(), Parcelable
+    data class Remote(
+        val url: String,
+        val headers: HashMap<String,String> = hashMapOf()
+    ) : ResourceType(), Parcelable
 
     @Parcelize
     data class Base64(val file: String) : ResourceType(), Parcelable

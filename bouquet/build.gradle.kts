@@ -37,14 +37,16 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.3.0"
+        kotlinCompilerExtensionVersion = "1.4.2"
     }
 }
 
 dependencies {
-    implementation("androidx.compose.ui:ui:1.3.3")
-    implementation("androidx.compose.material:material:1.3.1")
-    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.compose.ui:ui:1.4.1")
+    implementation("androidx.compose.material:material:1.4.1")
+    implementation("androidx.core:core-ktx:1.10.0")
     implementation("com.google.accompanist:accompanist-pager:0.28.0")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
 }
