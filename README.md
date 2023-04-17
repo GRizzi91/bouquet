@@ -31,7 +31,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 3. Add the dependency
 
 	dependencies {
-	        implementation 'io.github.grizzi91:bouquet:1.0.1'
+	        implementation 'io.github.grizzi91:bouquet:1.0.2'
 	}
 
 Step 4. You can use the library by creating the state in a Composable
@@ -96,10 +96,12 @@ You can use Modifier to modify dimension, background color or shape and other pa
 
 You can choose different sources using the sealed class ResourceType
 
-Remote source
+Remote source, with support for headers
+
 ```kotlin
 ResourceType.Remote(
-	"https://myreport.altervista.org/Lorem_Ipsum.pdf"
+	url = "https://myreport.altervista.org/Lorem_Ipsum.pdf",
+    headers = hashMapOf("headerKey" to "headerValue")
 )
 ```
 Local source
