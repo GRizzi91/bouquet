@@ -236,7 +236,7 @@ private fun load(
 ) {
     runCatching {
         if (state.isLoaded) {
-            coroutineScope.launch {
+            coroutineScope.launch(Dispatchers.IO) {
                 val pFD =
                     ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
                 val textForEachPage = if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
@@ -245,7 +245,7 @@ private fun load(
         } else {
             when (val res = state.resource) {
                 is ResourceType.Local -> {
-                    coroutineScope.launch {
+                    coroutineScope.launch(Dispatchers.IO) {
                         context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
                             val textForEachPage = if (state.isAccessibleEnable) {
                                 getTextByPage(context, it)
@@ -258,48 +258,46 @@ private fun load(
                     }
                 }
                 is ResourceType.Remote -> {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            runCatching {
-                                val bufferSize = 8192
-                                val url = URL(res.url)
-                                val connection = url.openConnection().also { it.connect() }
-                                val totalLength = connection.contentLength
-                                var downloaded = 0
-                                val file = File(context.cacheDir, generateFileName())
-                                BufferedInputStream(url.openStream(), bufferSize).use { input ->
-                                    file.outputStream().use { output ->
-                                        var data = ByteArray(bufferSize)
-                                        var count = input.read(data)
-                                        while (count != -1) {
-                                            if (totalLength > 0) {
-                                                downloaded += bufferSize
-                                                state.mLoadPercent =
-                                                    (downloaded * (100 / totalLength.toFloat())).toInt()
-                                            }
-                                            output.write(data, 0, count)
-                                            data = ByteArray(bufferSize)
-                                            count = input.read(data)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        runCatching {
+                            val bufferSize = 8192
+                            val url = URL(res.url)
+                            val connection = url.openConnection().also { it.connect() }
+                            val totalLength = connection.contentLength
+                            var downloaded = 0
+                            val file = File(context.cacheDir, generateFileName())
+                            BufferedInputStream(url.openStream(), bufferSize).use { input ->
+                                file.outputStream().use { output ->
+                                    var data = ByteArray(bufferSize)
+                                    var count = input.read(data)
+                                    while (count != -1) {
+                                        if (totalLength > 0) {
+                                            downloaded += bufferSize
+                                            state.mLoadPercent =
+                                                (downloaded * (100 / totalLength.toFloat())).toInt()
                                         }
+                                        output.write(data, 0, count)
+                                        data = ByteArray(bufferSize)
+                                        count = input.read(data)
                                     }
                                 }
-                                val pFD = ParcelFileDescriptor.open(
-                                    file,
-                                    ParcelFileDescriptor.MODE_READ_ONLY
-                                )
-                                val textForEachPage = if (state.isAccessibleEnable) {
-                                    getTextByPage(context, pFD)
-                                } else emptyList()
-                                state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
-                                state.mFile = file
-                            }.onFailure {
-                                state.mError = it
                             }
+                            val pFD = ParcelFileDescriptor.open(
+                                file,
+                                ParcelFileDescriptor.MODE_READ_ONLY
+                            )
+                            val textForEachPage = if (state.isAccessibleEnable) {
+                                getTextByPage(context, pFD)
+                            } else emptyList()
+                            state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+                            state.mFile = file
+                        }.onFailure {
+                            state.mError = it
                         }
                     }
                 }
                 is ResourceType.Base64 -> {
-                    coroutineScope.launch {
+                    coroutineScope.launch(Dispatchers.IO) {
                         runCatching {
                             val file = context.base64ToPdf(res.file)
                             val pFD = ParcelFileDescriptor.open(
