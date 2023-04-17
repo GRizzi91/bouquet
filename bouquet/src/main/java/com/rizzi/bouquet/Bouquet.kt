@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
+import com.rizzi.bouquet.network.getDownloadInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -261,20 +262,24 @@ private fun load(
                     coroutineScope.launch(Dispatchers.IO) {
                         runCatching {
                             val bufferSize = 8192
-                            val url = URL(res.url)
-                            val connection = url.openConnection().also { it.connect() }
-                            val totalLength = connection.contentLength
                             var downloaded = 0
                             val file = File(context.cacheDir, generateFileName())
-                            BufferedInputStream(url.openStream(), bufferSize).use { input ->
+                            val response = getDownloadInterface(
+                                res.headers
+                            ).downloadFile(
+                                res.url
+                            )
+                            val byteStream = response.byteStream()
+                            byteStream.use { input ->
                                 file.outputStream().use { output ->
+                                    val totalBytes = response.contentLength()
                                     var data = ByteArray(bufferSize)
                                     var count = input.read(data)
                                     while (count != -1) {
-                                        if (totalLength > 0) {
+                                        if (totalBytes > 0) {
                                             downloaded += bufferSize
                                             state.mLoadPercent =
-                                                (downloaded * (100 / totalLength.toFloat())).toInt()
+                                                (downloaded * (100 / totalBytes.toFloat())).toInt()
                                         }
                                         output.write(data, 0, count)
                                         data = ByteArray(bufferSize)
