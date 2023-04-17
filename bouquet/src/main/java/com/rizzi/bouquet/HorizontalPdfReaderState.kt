@@ -13,7 +13,7 @@ class HorizontalPdfReaderState(
     resource: ResourceType,
     isZoomEnable: Boolean = false,
     isAccessibleEnable: Boolean = false,
-    ) : PdfReaderState(resource,isZoomEnable, isAccessibleEnable) {
+) : PdfReaderState(resource, isZoomEnable, isAccessibleEnable) {
 
     internal var pagerState: PagerState = PagerState()
 
@@ -56,7 +56,7 @@ fun rememberHorizontalPdfReaderState(
     resource: ResourceType,
     isZoomEnable: Boolean = true,
     isAccessibleEnable: Boolean = false,
-    ): HorizontalPdfReaderState {
+): HorizontalPdfReaderState {
     return rememberSaveable(saver = HorizontalPdfReaderState.Saver) {
         HorizontalPdfReaderState(resource, isZoomEnable, isAccessibleEnable)
     }
