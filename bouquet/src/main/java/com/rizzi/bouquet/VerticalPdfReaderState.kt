@@ -9,8 +9,9 @@ import androidx.core.net.toUri
 
 class VerticalPdfReaderState(
     resource: ResourceType,
-    isZoomEnable: Boolean = false
-) : PdfReaderState(resource, isZoomEnable) {
+    isZoomEnable: Boolean = false,
+    isAccessibleEnable: Boolean = false,
+) : PdfReaderState(resource, isZoomEnable, isAccessibleEnable) {
 
     internal var lazyState: LazyListState = LazyListState()
         private set
@@ -52,6 +53,7 @@ class VerticalPdfReaderState(
                 listOf(
                     resource,
                     it.isZoomEnable,
+                    it.isAccessibleEnable,
                     it.lazyState.firstVisibleItemIndex,
                     it.lazyState.firstVisibleItemScrollOffset
                 )
@@ -59,7 +61,8 @@ class VerticalPdfReaderState(
             restore = {
                 VerticalPdfReaderState(
                     it[0] as ResourceType,
-                    it[1] as Boolean
+                    it[1] as Boolean,
+                    it[2] as Boolean
                 ).apply {
                     lazyState = LazyListState(
                         firstVisibleItemIndex = it[2] as Int,
@@ -74,9 +77,10 @@ class VerticalPdfReaderState(
 @Composable
 fun rememberVerticalPdfReaderState(
     resource: ResourceType,
-    isZoomEnable: Boolean = true
+    isZoomEnable: Boolean = true,
+    isAccessibleEnable: Boolean = false,
 ): VerticalPdfReaderState {
     return rememberSaveable(saver = VerticalPdfReaderState.Saver) {
-        VerticalPdfReaderState(resource, isZoomEnable)
+        VerticalPdfReaderState(resource, isZoomEnable, isAccessibleEnable)
     }
 }

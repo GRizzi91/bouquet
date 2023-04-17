@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
+import com.rizzi.bouquet.network.getDownloadInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -92,14 +93,14 @@ fun VerticalPDFReader(
                 state = lazyState
             ) {
                 items(pdf.pageCount) {
-                    val bitmapState = pdf.pageLists[it].stateFlow.collectAsState()
+                    val pageContent = pdf.pageLists[it].stateFlow.collectAsState().value
                     DisposableEffect(key1 = Unit) {
                         pdf.pageLists[it].load()
                         onDispose {
                             pdf.pageLists[it].recycle()
                         }
                     }
-                    val height = bitmapState.value.height * state.scale
+                    val height = pageContent.bitmap.height * state.scale
                     val width = constraints.maxWidth * state.scale
                     PdfImage(
                         graphicsLayerData = {
@@ -110,8 +111,9 @@ fun VerticalPDFReader(
                             )
                         },
                         bitmap = {
-                            bitmapState.value.asImageBitmap()
+                            pageContent.bitmap.asImageBitmap()
                         },
+                        contentDescription = pageContent.contentDescription,
                         dimension = {
                             Dimension(
                                 height = with(density) { height.toDp() },
@@ -185,14 +187,14 @@ fun HorizontalPDFReader(
                 state = state.pagerState,
                 userScrollEnabled = state.scale == 1f
             ) { page ->
-                val bitmapState = pdf.pageLists[page].stateFlow.collectAsState()
+                val pageContent = pdf.pageLists[page].stateFlow.collectAsState().value
                 DisposableEffect(key1 = Unit) {
                     pdf.pageLists[page].load()
                     onDispose {
                         pdf.pageLists[page].recycle()
                     }
                 }
-                val height = bitmapState.value.height * state.scale
+                val height = pageContent.bitmap.height * state.scale
                 val width = constraints.maxWidth * state.scale
                 PdfImage(
                     graphicsLayerData = {
@@ -210,9 +212,8 @@ fun HorizontalPDFReader(
                             )
                         }
                     },
-                    bitmap = {
-                        bitmapState.value.asImageBitmap()
-                    },
+                    bitmap = { pageContent.bitmap.asImageBitmap() },
+                    contentDescription = pageContent.contentDescription,
                     dimension = {
                         Dimension(
                             height = with(density) { height.toDp() },
@@ -236,15 +237,21 @@ private fun load(
 ) {
     runCatching {
         if (state.isLoaded) {
-            val pFD =
-                ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
-            state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
+            coroutineScope.launch(Dispatchers.IO) {
+                val pFD =
+                    ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                val textForEachPage = if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
+                state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+            }
         } else {
             when (val res = state.resource) {
                 is ResourceType.Local -> {
-                    coroutineScope.launch {
+                    coroutineScope.launch(Dispatchers.IO) {
                         context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
-                            state.pdfRender = BouquetPdfRender(it, width, height, portrait)
+                            val textForEachPage = if (state.isAccessibleEnable) {
+                                getTextByPage(context, it)
+                            } else emptyList()
+                            state.pdfRender = BouquetPdfRender(it, textForEachPage, width, height, portrait)
                             state.mFile = context.uriToFile(res.uri)
                         } ?: run {
                             state.mError = IOException("File not found")
@@ -252,52 +259,60 @@ private fun load(
                     }
                 }
                 is ResourceType.Remote -> {
-                    coroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            runCatching {
-                                val bufferSize = 8192
-                                val url = URL(res.url)
-                                val connection = url.openConnection().also { it.connect() }
-                                val totalLength = connection.contentLength
-                                var downloaded = 0
-                                val file = File(context.cacheDir, generateFileName())
-                                BufferedInputStream(url.openStream(), bufferSize).use { input ->
-                                    file.outputStream().use { output ->
-                                        var data = ByteArray(bufferSize)
-                                        var count = input.read(data)
-                                        while (count != -1) {
-                                            if (totalLength > 0) {
-                                                downloaded += bufferSize
-                                                state.mLoadPercent =
-                                                    (downloaded * (100 / totalLength.toFloat())).toInt()
-                                            }
-                                            output.write(data, 0, count)
-                                            data = ByteArray(bufferSize)
-                                            count = input.read(data)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        runCatching {
+                            val bufferSize = 8192
+                            var downloaded = 0
+                            val file = File(context.cacheDir, generateFileName())
+                            val response = getDownloadInterface(
+                                res.headers
+                            ).downloadFile(
+                                res.url
+                            )
+                            val byteStream = response.byteStream()
+                            byteStream.use { input ->
+                                file.outputStream().use { output ->
+                                    val totalBytes = response.contentLength()
+                                    var data = ByteArray(bufferSize)
+                                    var count = input.read(data)
+                                    while (count != -1) {
+                                        if (totalBytes > 0) {
+                                            downloaded += bufferSize
+                                            state.mLoadPercent =
+                                                (downloaded * (100 / totalBytes.toFloat())).toInt()
                                         }
+                                        output.write(data, 0, count)
+                                        data = ByteArray(bufferSize)
+                                        count = input.read(data)
                                     }
                                 }
-                                val pFD = ParcelFileDescriptor.open(
-                                    file,
-                                    ParcelFileDescriptor.MODE_READ_ONLY
-                                )
-                                state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
-                                state.mFile = file
-                            }.onFailure {
-                                state.mError = it
                             }
+                            val pFD = ParcelFileDescriptor.open(
+                                file,
+                                ParcelFileDescriptor.MODE_READ_ONLY
+                            )
+                            val textForEachPage = if (state.isAccessibleEnable) {
+                                getTextByPage(context, pFD)
+                            } else emptyList()
+                            state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+                            state.mFile = file
+                        }.onFailure {
+                            state.mError = it
                         }
                     }
                 }
                 is ResourceType.Base64 -> {
-                    coroutineScope.launch {
+                    coroutineScope.launch(Dispatchers.IO) {
                         runCatching {
                             val file = context.base64ToPdf(res.file)
                             val pFD = ParcelFileDescriptor.open(
                                 file,
                                 ParcelFileDescriptor.MODE_READ_ONLY
                             )
-                            state.pdfRender = BouquetPdfRender(pFD, width, height, portrait)
+                            val textForEachPage = if (state.isAccessibleEnable) {
+                                getTextByPage(context, pFD)
+                            } else emptyList()
+                            state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                             state.mFile = file
                         }.onFailure {
                             state.mError = it

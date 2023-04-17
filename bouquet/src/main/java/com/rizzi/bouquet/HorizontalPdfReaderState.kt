@@ -11,8 +11,9 @@ import com.google.accompanist.pager.PagerState
 @OptIn(ExperimentalPagerApi::class)
 class HorizontalPdfReaderState(
     resource: ResourceType,
-    isZoomEnable: Boolean = false
-) : PdfReaderState(resource, isZoomEnable) {
+    isZoomEnable: Boolean = false,
+    isAccessibleEnable: Boolean = false,
+) : PdfReaderState(resource, isZoomEnable, isAccessibleEnable) {
 
     internal var pagerState: PagerState = PagerState()
 
@@ -33,13 +34,15 @@ class HorizontalPdfReaderState(
                 listOf(
                     resource,
                     it.isZoomEnable,
+                    it.isAccessibleEnable,
                     it.pagerState.currentPage
                 )
             },
             restore = {
                 HorizontalPdfReaderState(
                     it[0] as ResourceType,
-                    it[1] as Boolean
+                    it[1] as Boolean,
+                    it[2] as Boolean
                 ).apply {
                     pagerState = PagerState(currentPage = it[2] as Int)
                 }
@@ -51,9 +54,10 @@ class HorizontalPdfReaderState(
 @Composable
 fun rememberHorizontalPdfReaderState(
     resource: ResourceType,
-    isZoomEnable: Boolean = true
+    isZoomEnable: Boolean = true,
+    isAccessibleEnable: Boolean = false,
 ): HorizontalPdfReaderState {
     return rememberSaveable(saver = HorizontalPdfReaderState.Saver) {
-        HorizontalPdfReaderState(resource, isZoomEnable)
+        HorizontalPdfReaderState(resource, isZoomEnable, isAccessibleEnable)
     }
 }
