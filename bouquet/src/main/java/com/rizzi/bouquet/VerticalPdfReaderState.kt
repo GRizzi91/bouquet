@@ -65,8 +65,8 @@ class VerticalPdfReaderState(
                     it[2] as Boolean
                 ).apply {
                     lazyState = LazyListState(
-                        firstVisibleItemIndex = it[2] as Int,
-                        firstVisibleItemScrollOffset = it[3] as Int
+                        firstVisibleItemIndex = it[3] as Int,
+                        firstVisibleItemScrollOffset = it[4] as Int
                     )
                 }
             }
