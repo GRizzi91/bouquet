@@ -165,9 +165,10 @@ class MainActivity : ComponentActivity() {
             ) {
                 viewModel.openResource(
                     ResourceType.Remote(
-                        this@MainActivity.getString(
+                        url = this@MainActivity.getString(
                             R.string.pdf_url
-                        )
+                        ),
+                        headers = hashMapOf("headerKey" to "headerValue")
                     )
                 )
             }
