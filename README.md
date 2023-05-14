@@ -6,7 +6,7 @@ The library supports both horizontal and vertical viewing.
 ## Features
 
 - Different sources available out of box (Base64, URL, URI)
-- Pinch to zoom and pan
+- Double tap to zoom and pan
 - You can retrieve the open file to share
 - Loading progress indication
 - Current page and total page number
@@ -31,7 +31,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 3. Add the dependency
 
 	dependencies {
-	        implementation 'io.github.grizzi91:bouquet:1.0.2'
+	        implementation 'io.github.grizzi91:bouquet:1.1.1'
 	}
 
 Step 4. You can use the library by creating the state in a Composable
@@ -117,6 +117,11 @@ Base64 source
 ResourceType.Base64(
 	// Base64 string
 )
+```
+Asset source
+
+```kotlin
+ResourceType.Asset(R.raw.pdf)
 ```
 
 ## Error handling
