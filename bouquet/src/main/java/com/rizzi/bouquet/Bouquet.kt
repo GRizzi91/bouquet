@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.Constraints
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -96,7 +95,6 @@ fun HorizontalPDFReader(
     ) {
         val ctx = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
-        val density = LocalDensity.current
         DisposableEffect(key1 = Unit) {
             load(
                 coroutineScope,
@@ -293,6 +291,7 @@ fun Modifier.tapToZoomVertical(
         .pointerInput(Unit) {
             detectTapGestures(
                 onDoubleTap = { tapCenter ->
+                    if (!state.isZoomEnable) return@detectTapGestures
                     if (state.mScale > 1.0f) {
                         state.mScale = 1.0f
                         state.offset = Offset(0f, 0f)
@@ -367,6 +366,7 @@ fun Modifier.tapToZoomHorizontal(
         .pointerInput(Unit) {
             detectTapGestures(
                 onDoubleTap = { tapCenter ->
+                    if (!state.isZoomEnable) return@detectTapGestures
                     if (state.mScale > 1.0f) {
                         state.mScale = 1.0f
                         state.offset = Offset(0f, 0f)
