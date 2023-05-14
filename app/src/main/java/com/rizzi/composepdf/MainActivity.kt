@@ -178,6 +178,14 @@ class MainActivity : ComponentActivity() {
             ) {
                 openDocumentPicker()
             }
+            SelectionElement(
+                title = "Open asset file",
+                text = "Open asset file in raw folder"
+            ) {
+                viewModel.openResource(
+                    ResourceType.Asset(R.raw.lorem_ipsum)
+                )
+            }
             Row(
                 modifier = Modifier
                     .padding(16.dp),

@@ -2,6 +2,7 @@ package com.rizzi.bouquet
 
 import android.net.Uri
 import android.os.Parcelable
+import androidx.annotation.RawRes
 import kotlinx.parcelize.Parcelize
 
 sealed class ResourceType {
@@ -16,4 +17,7 @@ sealed class ResourceType {
 
     @Parcelize
     data class Base64(val file: String) : ResourceType(), Parcelable
+
+    @Parcelize
+    data class Asset(@RawRes val assetId: Int) : ResourceType(), Parcelable
 }

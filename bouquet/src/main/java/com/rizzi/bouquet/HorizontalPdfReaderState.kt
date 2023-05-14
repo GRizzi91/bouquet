@@ -44,7 +44,7 @@ class HorizontalPdfReaderState(
                     it[1] as Boolean,
                     it[2] as Boolean
                 ).apply {
-                    pagerState = PagerState(currentPage = it[2] as Int)
+                    pagerState = PagerState(currentPage = it[3] as Int)
                 }
             }
         )
