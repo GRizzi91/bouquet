@@ -5,13 +5,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 
 @Composable
 internal fun PdfImage(
-    dimension: () -> Dimension,
-    graphicsLayerData: () -> GraphicsLayerData,
     bitmap: () -> ImageBitmap,
     contentDescription: String = "",
 ) {
@@ -19,7 +16,6 @@ internal fun PdfImage(
         bitmap = bitmap(),
         contentDescription = contentDescription,
         contentScale = ContentScale.None,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     )
 }
