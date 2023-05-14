@@ -42,8 +42,8 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.ui:ui:1.4.1")
-    implementation("androidx.compose.material:material:1.4.1")
+    implementation("androidx.compose.ui:ui:1.4.3")
+    implementation("androidx.compose.material:material:1.4.3")
     implementation("androidx.core:core-ktx:1.10.0")
     implementation("com.google.accompanist:accompanist-pager:0.28.0")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")

@@ -1,6 +1,7 @@
 package com.rizzi.bouquet
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -19,13 +20,6 @@ internal fun PdfImage(
         contentDescription = contentDescription,
         contentScale = ContentScale.None,
         modifier = Modifier
-            .size(dimension())
-            .graphicsLayer {
-                val gld = graphicsLayerData()
-                scaleX = gld.scale
-                scaleY = gld.scale
-                translationX = gld.translationX
-                translationY = gld.translationY
-            }
+            .fillMaxWidth()
     )
 }
