@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 
+
 @Composable
 fun VerticalPDFReader(
     state: VerticalPdfReaderState,
@@ -145,11 +146,15 @@ private fun load(
     runCatching {
         if (state.isLoaded) {
             coroutineScope.launch(Dispatchers.IO) {
-                val pFD =
-                    ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                val textForEachPage =
-                    if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
-                state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+                runCatching {
+                    val pFD =
+                        ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                    val textForEachPage =
+                        if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
+                    state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+                }.onFailure {
+                    state.mError = it
+                }
             }
         } else {
             when (val res = state.resource) {
@@ -234,6 +239,39 @@ private fun load(
                         }
                     }
                 }
+
+                is ResourceType.Asset -> {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        runCatching {
+                            val bufferSize = 8192
+                            val inputStream = context.resources.openRawResource(res.assetId)
+                            val outFile = File(context.cacheDir, generateFileName())
+                            inputStream.use { input ->
+                                outFile.outputStream().use { output ->
+                                    var data = ByteArray(bufferSize)
+                                    var count = input.read(data)
+                                    while (count != -1) {
+                                        output.write(data, 0, count)
+                                        data = ByteArray(bufferSize)
+                                        count = input.read(data)
+                                    }
+                                }
+                            }
+                            val pFD = ParcelFileDescriptor.open(
+                                outFile,
+                                ParcelFileDescriptor.MODE_READ_ONLY
+                            )
+                            val textForEachPage = if (state.isAccessibleEnable) {
+                                getTextByPage(context, pFD)
+                            } else emptyList()
+                            state.pdfRender =
+                                BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+                            state.mFile = outFile
+                        }.onFailure {
+                            state.mError = it
+                        }
+                    }
+                }
             }
         }
     }.onFailure {
@@ -251,7 +289,8 @@ fun Modifier.tapToZoomVertical(
     }
 ) {
     val coroutineScope = rememberCoroutineScope()
-    this.pointerInput(Unit) {
+    this
+        .pointerInput(Unit) {
             detectTapGestures(
                 onDoubleTap = { tapCenter ->
                     if (state.mScale > 1.0f) {
@@ -272,7 +311,7 @@ fun Modifier.tapToZoomVertical(
         }
         .pointerInput(Unit) {
             detectTransformGestures(true) { centroid, pan, zoom, rotation ->
-                val tupla = if (pan.y > 0) {
+                val pair = if (pan.y > 0) {
                     if (state.lazyState.canScrollBackward) {
                         Pair(0f, pan.y)
                     } else {
@@ -293,7 +332,7 @@ fun Modifier.tapToZoomVertical(
                             minimumValue = (-maxT / 2) * 1.3f,
                             maximumValue = (maxT / 2) * 1.3f
                         ),
-                        y = (state.offset.y + tupla.first).coerceIn(
+                        y = (state.offset.y + pair.first).coerceIn(
                             minimumValue = (-maxY / 2),
                             maximumValue = (maxY / 2)
                         )
@@ -303,7 +342,7 @@ fun Modifier.tapToZoomVertical(
                 }
                 state.offset = nOffset
                 coroutineScope.launch {
-                    state.lazyState.scrollBy((-tupla.second / state.scale))
+                    state.lazyState.scrollBy((-pair.second / state.scale))
                 }
             }
         }
@@ -324,7 +363,8 @@ fun Modifier.tapToZoomHorizontal(
         properties["state"] = state
     }
 ) {
-    this.pointerInput(Unit) {
+    this
+        .pointerInput(Unit) {
             detectTapGestures(
                 onDoubleTap = { tapCenter ->
                     if (state.mScale > 1.0f) {
