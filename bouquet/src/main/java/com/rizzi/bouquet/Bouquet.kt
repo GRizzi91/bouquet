@@ -5,8 +5,10 @@ import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -20,8 +22,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.rizzi.bouquet.network.getDownloadInterface
@@ -73,14 +78,33 @@ fun VerticalPDFReader(
                             pdf.pageLists[it].recycle()
                         }
                     }
-                    PdfImage(
-                        bitmap = { pageContent.bitmap.asImageBitmap() },
-                        contentDescription = pageContent.contentDescription
-                    )
+                    when (pageContent) {
+                        is PageContentInt.PageContent -> {
+                            PdfImage(
+                                bitmap = { pageContent.bitmap.asImageBitmap() },
+                                contentDescription = pageContent.contentDescription
+                            )
+                        }
+
+                        is PageContentInt.BlankPage -> {
+                            Box(
+                                modifier = Modifier.size(
+                                    width = pageContent.width.dp(),
+                                    height = pageContent.height.dp()
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+fun Int.dp(): Dp {
+    val density = LocalDensity.current.density
+    return (this / density).dp
 }
 
 @OptIn(ExperimentalPagerApi::class)
@@ -124,10 +148,23 @@ fun HorizontalPDFReader(
                         pdf.pageLists[page].recycle()
                     }
                 }
-                PdfImage(
-                    bitmap = { pageContent.bitmap.asImageBitmap() },
-                    contentDescription = pageContent.contentDescription
-                )
+                when (pageContent) {
+                    is PageContentInt.PageContent -> {
+                        PdfImage(
+                            bitmap = { pageContent.bitmap.asImageBitmap() },
+                            contentDescription = pageContent.contentDescription
+                        )
+                    }
+
+                    is PageContentInt.BlankPage -> {
+                        Box(
+                            modifier = Modifier.size(
+                                width = pageContent.width.dp(),
+                                height = pageContent.height.dp()
+                            )
+                        )
+                    }
+                }
             }
         }
     }
@@ -149,7 +186,8 @@ private fun load(
                         ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
                     val textForEachPage =
                         if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
-                    state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+                    state.pdfRender =
+                        BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                 }.onFailure {
                     state.mError = it
                 }
