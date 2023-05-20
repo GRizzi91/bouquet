@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.core.graphics.createBitmap
+import com.rizzi.bouquet.cache.CacheManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -21,6 +22,7 @@ internal class BouquetPdfRender(
     val pageCount get() = pdfRenderer.pageCount
     private val mutex: Mutex = Mutex()
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val cacheManager = CacheManager()
 
     val pageLists: List<Page> = List(pdfRenderer.pageCount) {
         Page(
@@ -29,6 +31,7 @@ internal class BouquetPdfRender(
             textForPage = textForEachPage.getOrElse(it) { "" },
             pdfRenderer = pdfRenderer,
             coroutineScope = coroutineScope,
+            cacheManager = cacheManager,
             width = width,
             height = height,
             portrait = portrait
@@ -49,6 +52,7 @@ internal class BouquetPdfRender(
         val textForPage: String,
         val pdfRenderer: PdfRenderer,
         val coroutineScope: CoroutineScope,
+        val cacheManager: CacheManager,
         width: Int,
         height: Int,
         portrait: Boolean
@@ -86,18 +90,19 @@ internal class BouquetPdfRender(
             if (!isLoaded) {
                 job = coroutineScope.launch {
                     mutex.withLock {
-                        val newBitmap: Bitmap
+                        val newBitmap: Bitmap = cacheManager.getBitmap(index.toString()) ?:
                         pdfRenderer.openPage(index).use { currentPage ->
-                            newBitmap = createBlankBitmap(
+                            val tempBitmap = createBlankBitmap(
                                 width = dimension.width,
                                 height = dimension.height
                             )
                             currentPage.render(
-                                newBitmap,
+                                tempBitmap,
                                 null,
                                 null,
                                 PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
                             )
+                            tempBitmap
                         }
                         isLoaded = true
                         stateFlow.emit(PageContentInt.PageContent(newBitmap, textForPage))
@@ -115,7 +120,12 @@ internal class BouquetPdfRender(
                     height = dimension.height
                 )
             )
-            oldBitmap?.bitmap?.recycle()
+            oldBitmap?.bitmap?.let { bitmap ->
+                cacheManager.saveBitmap(
+                    index.toString(),
+                    bitmap
+                )
+            }
         }
 
         private fun createBlankBitmap(
