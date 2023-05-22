@@ -2,11 +2,14 @@ package com.rizzi.bouquet
 
 import android.content.Context
 import android.os.ParcelFileDescriptor
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -16,12 +19,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.rizzi.bouquet.network.getDownloadInterface
@@ -73,14 +80,29 @@ fun VerticalPDFReader(
                             pdf.pageLists[it].recycle()
                         }
                     }
-                    PdfImage(
-                        bitmap = { pageContent.bitmap.asImageBitmap() },
-                        contentDescription = pageContent.contentDescription
-                    )
+                    when (pageContent) {
+                        is PageContentInt.PageContent -> {
+                            PdfImage(
+                                bitmap = { pageContent.bitmap.asImageBitmap() },
+                                contentDescription = pageContent.contentDescription
+                            )
+                        }
+
+                        is PageContentInt.BlankPage -> BlackPage(
+                            width = pageContent.width,
+                            height = pageContent.height
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+fun Int.dp(): Dp {
+    val density = LocalDensity.current.density
+    return (this / density).dp
 }
 
 @OptIn(ExperimentalPagerApi::class)
@@ -124,10 +146,19 @@ fun HorizontalPDFReader(
                         pdf.pageLists[page].recycle()
                     }
                 }
-                PdfImage(
-                    bitmap = { pageContent.bitmap.asImageBitmap() },
-                    contentDescription = pageContent.contentDescription
-                )
+                when (pageContent) {
+                    is PageContentInt.PageContent -> {
+                        PdfImage(
+                            bitmap = { pageContent.bitmap.asImageBitmap() },
+                            contentDescription = pageContent.contentDescription
+                        )
+                    }
+
+                    is PageContentInt.BlankPage -> BlackPage(
+                        width = pageContent.width,
+                        height = pageContent.height
+                    )
+                }
             }
         }
     }
@@ -149,7 +180,8 @@ private fun load(
                         ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
                     val textForEachPage =
                         if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
-                    state.pdfRender = BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
+                    state.pdfRender =
+                        BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                 }.onFailure {
                     state.mError = it
                 }
@@ -410,4 +442,19 @@ fun Modifier.tapToZoomHorizontal(
             translationX = state.offset.x
             translationY = state.offset.y
         }
+}
+
+@Composable
+fun BlackPage(
+    width: Int,
+    height: Int
+) {
+    Box(
+        modifier = Modifier
+            .size(
+                width = width.dp(),
+                height = height.dp()
+            )
+            .background(color = Color.White)
+    )
 }

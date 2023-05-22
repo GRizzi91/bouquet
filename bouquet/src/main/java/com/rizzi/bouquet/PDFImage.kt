@@ -15,7 +15,7 @@ internal fun PdfImage(
     Image(
         bitmap = bitmap(),
         contentDescription = contentDescription,
-        contentScale = ContentScale.None,
+        contentScale = ContentScale.FillWidth,
         modifier = Modifier.fillMaxWidth()
     )
 }
