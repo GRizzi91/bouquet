@@ -37,7 +37,10 @@ internal class BouquetPdfRender(
 
     fun close() {
         coroutineScope.launch {
-            pageLists.forEach { it.job?.cancelAndJoin() }
+            pageLists.forEach {
+                it.job?.cancelAndJoin()
+                it.recycle()
+            }
             pdfRenderer.close()
             fileDescriptor.close()
         }
