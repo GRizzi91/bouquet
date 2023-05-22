@@ -26,7 +26,7 @@ internal class BouquetPdfRender(
         Page(
             mutex = mutex,
             index = it,
-            textForPage = textForEachPage.getOrElse(it) {""},
+            textForPage = textForEachPage.getOrElse(it) { "" },
             pdfRenderer = pdfRenderer,
             coroutineScope = coroutineScope,
             width = width,
@@ -37,7 +37,10 @@ internal class BouquetPdfRender(
 
     fun close() {
         coroutineScope.launch {
-            pageLists.forEach { it.job?.cancelAndJoin() }
+            pageLists.forEach {
+                it.job?.cancelAndJoin()
+                it.recycle()
+            }
             pdfRenderer.close()
             fileDescriptor.close()
         }
@@ -73,7 +76,12 @@ internal class BouquetPdfRender(
 
         var job: Job? = null
 
-        val stateFlow = MutableStateFlow(PageContent(createBlankBitmap(), ""))
+        val stateFlow = MutableStateFlow<PageContentInt>(
+            PageContentInt.BlankPage(
+                width = dimension.width,
+                height = dimension.height
+            )
+        )
 
         var isLoaded = false
 
@@ -81,8 +89,12 @@ internal class BouquetPdfRender(
             if (!isLoaded) {
                 job = coroutineScope.launch {
                     mutex.withLock {
-                        val newBitmap = createBlankBitmap()
+                        val newBitmap: Bitmap
                         pdfRenderer.openPage(index).use { currentPage ->
+                            newBitmap = createBlankBitmap(
+                                width = dimension.width,
+                                height = dimension.height
+                            )
                             currentPage.render(
                                 newBitmap,
                                 null,
@@ -91,7 +103,7 @@ internal class BouquetPdfRender(
                             )
                         }
                         isLoaded = true
-                        stateFlow.emit(PageContent(newBitmap, textForPage))
+                        stateFlow.emit(PageContentInt.PageContent(newBitmap, textForPage))
                     }
                 }
             }
@@ -99,13 +111,23 @@ internal class BouquetPdfRender(
 
         fun recycle() {
             isLoaded = false
-            stateFlow.tryEmit(PageContent(createBlankBitmap(),""))
+            val oldBitmap = stateFlow.value as? PageContentInt.PageContent
+            stateFlow.tryEmit(
+                PageContentInt.BlankPage(
+                    width = dimension.width,
+                    height = dimension.height
+                )
+            )
+            oldBitmap?.bitmap?.recycle()
         }
 
-        private fun createBlankBitmap(): Bitmap {
+        private fun createBlankBitmap(
+            width: Int,
+            height: Int
+        ): Bitmap {
             return createBitmap(
-                dimension.width,
-                dimension.height,
+                width,
+                height,
                 Bitmap.Config.ARGB_8888
             ).apply {
                 val canvas = Canvas(this)
@@ -121,4 +143,14 @@ internal class BouquetPdfRender(
     }
 }
 
-data class PageContent(val bitmap: Bitmap, val contentDescription: String)
+sealed interface PageContentInt {
+    data class PageContent(
+        val bitmap: Bitmap,
+        val contentDescription: String
+    ) : PageContentInt
+
+    data class BlankPage(
+        val width: Int,
+        val height: Int
+    ) : PageContentInt
+}
