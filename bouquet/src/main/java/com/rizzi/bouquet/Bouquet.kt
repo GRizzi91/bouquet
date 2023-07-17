@@ -51,7 +51,7 @@ fun VerticalPDFReader(
         val ctx = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
         val lazyState = state.lazyState
-        DisposableEffect(key1 = Unit) {
+        DisposableEffect(key1 = state.resource) {
             load(
                 coroutineScope,
                 ctx,
@@ -117,7 +117,7 @@ fun HorizontalPDFReader(
     ) {
         val ctx = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
-        DisposableEffect(key1 = Unit) {
+        DisposableEffect(key1 = state.resource) {
             load(
                 coroutineScope,
                 ctx,
