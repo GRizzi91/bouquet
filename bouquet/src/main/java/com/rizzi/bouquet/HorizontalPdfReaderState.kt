@@ -17,6 +17,13 @@ class HorizontalPdfReaderState(
 
     internal var pagerState: PagerState = PagerState()
 
+    override val canScrollForward: Boolean
+        // Should be using pagerState.canScrollForward but it is not implemented correctly. See PagerState Code.
+        get() = pagerState.currentPage != pagerState.pageCount-1
+    override val canScrollBackward: Boolean
+        // Should be using pagerState.canScrollBackward but it is not implemented correctly. See PagerState Code.
+        get() = pagerState.currentPage != 0
+
     override val currentPage: Int
         get() = pagerState.currentPage
 

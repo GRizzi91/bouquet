@@ -271,6 +271,42 @@ class MainActivity : ComponentActivity() {
                                 top = 4.dp
                             )
                         )
+                        Text(
+                            text = if (pdfState.canScrollForward) {
+                                "Can scroll forward"
+                            } else {
+                                "Cannot scroll forward"
+                            },
+                            color = if (pdfState.canScrollForward) {
+                                MaterialTheme.colors.onSurface
+                            } else {
+                                MaterialTheme.colors.error
+                            },
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                end = 8.dp,
+                                bottom = 8.dp,
+                                top = 4.dp
+                            )
+                        )
+                        Text(
+                            text = if (pdfState.canScrollBackward) {
+                                "Can scroll backward"
+                            } else {
+                                "Cannot scroll backward"
+                            },
+                            color = if (pdfState.canScrollBackward) {
+                                MaterialTheme.colors.onSurface
+                            } else {
+                                MaterialTheme.colors.error
+                            },
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                end = 8.dp,
+                                bottom = 8.dp,
+                                top = 4.dp
+                            )
+                        )
                     }
                 }
             }
@@ -334,6 +370,42 @@ class MainActivity : ComponentActivity() {
                                 "Stationary"
                             },
                             color = if (pdfState.isScrolling) {
+                                MaterialTheme.colors.onSurface
+                            } else {
+                                MaterialTheme.colors.error
+                            },
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                end = 8.dp,
+                                bottom = 8.dp,
+                                top = 4.dp
+                            )
+                        )
+                        Text(
+                            text = if (pdfState.canScrollForward) {
+                                "Can scroll forward"
+                            } else {
+                                "Cannot scroll forward"
+                            },
+                            color = if (pdfState.canScrollForward) {
+                                MaterialTheme.colors.onSurface
+                            } else {
+                                MaterialTheme.colors.error
+                            },
+                            modifier = Modifier.padding(
+                                start = 8.dp,
+                                end = 8.dp,
+                                bottom = 8.dp,
+                                top = 4.dp
+                            )
+                        )
+                        Text(
+                            text = if (pdfState.canScrollBackward) {
+                                "Can scroll backward"
+                            } else {
+                                "Cannot scroll backward"
+                            },
+                            color = if (pdfState.canScrollBackward) {
                                 MaterialTheme.colors.onSurface
                             } else {
                                 MaterialTheme.colors.error
