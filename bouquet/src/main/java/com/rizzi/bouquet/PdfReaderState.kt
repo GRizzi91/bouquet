@@ -1,5 +1,6 @@
 package com.rizzi.bouquet
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -48,6 +49,9 @@ abstract class PdfReaderState(
         get() = mFile != null
 
     abstract val isScrolling: Boolean
+
+    abstract val canScrollForward: Boolean
+    abstract val canScrollBackward: Boolean
 
     fun close() {
         pdfRender?.close()

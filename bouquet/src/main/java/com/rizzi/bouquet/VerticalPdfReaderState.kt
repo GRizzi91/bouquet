@@ -16,6 +16,10 @@ class VerticalPdfReaderState(
     internal var lazyState: LazyListState = LazyListState()
         private set
 
+    override val canScrollForward: Boolean
+        get() = lazyState.canScrollForward
+    override val canScrollBackward: Boolean
+        get() = lazyState.canScrollBackward
     override val currentPage: Int
         get() = currentPage()
 
