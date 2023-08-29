@@ -341,7 +341,10 @@ fun Modifier.tapToZoomVertical(
             )
         }
         .pointerInput(Unit) {
-            detectTransformGestures(true) { centroid, pan, zoom, rotation ->
+            detectTransformGestures(false) { centroid, pan, zoom, rotation ->
+                // set zoom in / zoom out
+                state.mScale = kotlin.math.max(state.mScale * zoom, 1f)
+
                 val pair = if (pan.y > 0) {
                     if (state.lazyState.canScrollBackward) {
                         Pair(0f, pan.y)
@@ -416,7 +419,10 @@ fun Modifier.tapToZoomHorizontal(
             )
         }
         .pointerInput(Unit) {
-            detectTransformGestures(true) { centroid, pan, zoom, rotation ->
+            detectTransformGestures(false) { centroid, pan, zoom, rotation ->
+                // set zoom in / zoom out
+                state.mScale = kotlin.math.max(state.mScale * zoom, 1f)
+
                 val nOffset = if (state.scale > 1f) {
                     val maxT = (constraints.maxWidth * state.scale) - constraints.maxWidth
                     val maxY = (constraints.maxHeight * state.scale) - constraints.maxHeight
