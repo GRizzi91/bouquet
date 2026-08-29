@@ -29,9 +29,8 @@ import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.rizzi.bouquet.network.getDownloadInterface
+import androidx.compose.foundation.pager.HorizontalPager
+import com.rizzi.bouquet.network.OkHttpPdfDownloader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -105,7 +104,6 @@ fun Int.dp(): Dp {
     return (this / density).dp
 }
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HorizontalPDFReader(
     state: HorizontalPdfReaderState,
@@ -135,7 +133,6 @@ fun HorizontalPDFReader(
                 modifier = Modifier
                     .fillMaxSize()
                     .tapToZoomHorizontal(state, constraints),
-                count = state.pdfPageCount,
                 state = state.pagerState,
                 userScrollEnabled = state.scale == 1f
             ) { page ->
@@ -179,7 +176,7 @@ private fun load(
                     val pFD =
                         ParcelFileDescriptor.open(state.mFile, ParcelFileDescriptor.MODE_READ_ONLY)
                     val textForEachPage =
-                        if (state.isAccessibleEnable) getTextByPage(context, pFD) else emptyList()
+                        extractTextByPage(context, state.effectiveTextExtractor, pFD)
                     state.pdfRender =
                         BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                 }.onFailure {
@@ -192,9 +189,7 @@ private fun load(
                     coroutineScope.launch(Dispatchers.IO) {
                         runCatching {
                             context.contentResolver.openFileDescriptor(res.uri, "r")?.let {
-                                val textForEachPage = if (state.isAccessibleEnable) {
-                                    getTextByPage(context, it)
-                                } else emptyList()
+                                val textForEachPage = extractTextByPage(context, state.effectiveTextExtractor, it)
                                 state.pdfRender =
                                     BouquetPdfRender(it, textForEachPage, width, height, portrait)
                                 state.mFile = context.uriToFile(res.uri)
@@ -208,39 +203,15 @@ private fun load(
                 is ResourceType.Remote -> {
                     coroutineScope.launch(Dispatchers.IO) {
                         runCatching {
-                            val bufferSize = 8192
-                            var downloaded = 0
                             val file = File(context.cacheDir, generateFileName())
-                            val response = getDownloadInterface(
-                                res.headers
-                            ).downloadFile(
-                                res.url
-                            )
-                            val byteStream = response.byteStream()
-                            byteStream.use { input ->
-                                file.outputStream().use { output ->
-                                    val totalBytes = response.contentLength()
-                                    var data = ByteArray(bufferSize)
-                                    var count = input.read(data)
-                                    while (count != -1) {
-                                        if (totalBytes > 0) {
-                                            downloaded += bufferSize
-                                            state.mLoadPercent =
-                                                (downloaded * (100 / totalBytes.toFloat())).toInt()
-                                        }
-                                        output.write(data, 0, count)
-                                        data = ByteArray(bufferSize)
-                                        count = input.read(data)
-                                    }
-                                }
+                            OkHttpPdfDownloader().download(res.url, res.headers, file) { progress ->
+                                state.mLoadPercent = ((progress ?: 0f) * 100).toInt()
                             }
                             val pFD = ParcelFileDescriptor.open(
                                 file,
                                 ParcelFileDescriptor.MODE_READ_ONLY
                             )
-                            val textForEachPage = if (state.isAccessibleEnable) {
-                                getTextByPage(context, pFD)
-                            } else emptyList()
+                            val textForEachPage = extractTextByPage(context, state.effectiveTextExtractor, pFD)
                             state.pdfRender =
                                 BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                             state.mFile = file
@@ -258,9 +229,7 @@ private fun load(
                                 file,
                                 ParcelFileDescriptor.MODE_READ_ONLY
                             )
-                            val textForEachPage = if (state.isAccessibleEnable) {
-                                getTextByPage(context, pFD)
-                            } else emptyList()
+                            val textForEachPage = extractTextByPage(context, state.effectiveTextExtractor, pFD)
                             state.pdfRender =
                                 BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                             state.mFile = file
@@ -291,9 +260,7 @@ private fun load(
                                 outFile,
                                 ParcelFileDescriptor.MODE_READ_ONLY
                             )
-                            val textForEachPage = if (state.isAccessibleEnable) {
-                                getTextByPage(context, pFD)
-                            } else emptyList()
+                            val textForEachPage = extractTextByPage(context, state.effectiveTextExtractor, pFD)
                             state.pdfRender =
                                 BouquetPdfRender(pFD, textForEachPage, width, height, portrait)
                             state.mFile = outFile

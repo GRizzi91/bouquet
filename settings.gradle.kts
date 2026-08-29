@@ -17,4 +17,5 @@ dependencyResolutionManagement {
 rootProject.name = "bouquet"
 
 include(":bouquet")
+include(":bouquet-text")
 include(":sample")

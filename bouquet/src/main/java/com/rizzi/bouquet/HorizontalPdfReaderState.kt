@@ -5,17 +5,16 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.core.net.toUri
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.PagerState
+import androidx.compose.foundation.pager.PagerState
 
-@OptIn(ExperimentalPagerApi::class)
 class HorizontalPdfReaderState(
     resource: ResourceType,
     isZoomEnable: Boolean = false,
     isAccessibleEnable: Boolean = false,
-) : PdfReaderState(resource, isZoomEnable, isAccessibleEnable) {
+    textExtractor: PdfTextExtractor? = null,
+) : PdfReaderState(resource, isZoomEnable, isAccessibleEnable, textExtractor) {
 
-    internal var pagerState: PagerState = PagerState()
+    internal var pagerState: PagerState = PagerState { pdfPageCount }
 
     override val currentPage: Int
         get() = pagerState.currentPage
@@ -44,7 +43,7 @@ class HorizontalPdfReaderState(
                     it[1] as Boolean,
                     it[2] as Boolean
                 ).apply {
-                    pagerState = PagerState(currentPage = it[3] as Int)
+                    pagerState = PagerState(currentPage = it[3] as Int) { pdfPageCount }
                 }
             }
         )
@@ -56,8 +55,9 @@ fun rememberHorizontalPdfReaderState(
     resource: ResourceType,
     isZoomEnable: Boolean = true,
     isAccessibleEnable: Boolean = false,
+    textExtractor: PdfTextExtractor? = null,
 ): HorizontalPdfReaderState {
     return rememberSaveable(saver = HorizontalPdfReaderState.Saver) {
-        HorizontalPdfReaderState(resource, isZoomEnable, isAccessibleEnable)
+        HorizontalPdfReaderState(resource, isZoomEnable, isAccessibleEnable, textExtractor)
     }
 }

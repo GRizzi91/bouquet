@@ -11,7 +11,8 @@ class VerticalPdfReaderState(
     resource: ResourceType,
     isZoomEnable: Boolean = false,
     isAccessibleEnable: Boolean = false,
-) : PdfReaderState(resource, isZoomEnable, isAccessibleEnable) {
+    textExtractor: PdfTextExtractor? = null,
+) : PdfReaderState(resource, isZoomEnable, isAccessibleEnable, textExtractor) {
 
     internal var lazyState: LazyListState = LazyListState()
         private set
@@ -79,8 +80,9 @@ fun rememberVerticalPdfReaderState(
     resource: ResourceType,
     isZoomEnable: Boolean = true,
     isAccessibleEnable: Boolean = false,
+    textExtractor: PdfTextExtractor? = null,
 ): VerticalPdfReaderState {
     return rememberSaveable(saver = VerticalPdfReaderState.Saver) {
-        VerticalPdfReaderState(resource, isZoomEnable, isAccessibleEnable)
+        VerticalPdfReaderState(resource, isZoomEnable, isAccessibleEnable, textExtractor)
     }
 }

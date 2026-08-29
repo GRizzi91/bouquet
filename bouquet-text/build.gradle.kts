@@ -2,14 +2,12 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
 }
 
 android {
-    namespace = "com.rizzi.bouquet"
+    namespace = "com.rizzi.bouquet.text"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -31,17 +29,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    buildFeatures {
-        compose = true
-    }
-
-    testOptions {
-        unitTests.isIncludeAndroidResources = true
-    }
 }
 
 kotlin {
+    explicitApi()
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
     }
@@ -55,12 +46,9 @@ mavenPublishing {
 }
 
 dependencies {
-    implementation(platform(libs.compose.bom))
-    implementation(libs.compose.ui)
-    implementation(libs.compose.foundation)
-    implementation(libs.androidx.core.ktx)
+    api(project(":bouquet"))
     implementation(libs.kotlinx.coroutines.android)
-    api(libs.okhttp)
+    implementation(libs.pdfbox.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

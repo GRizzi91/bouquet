@@ -10,7 +10,11 @@ abstract class PdfReaderState(
     val resource: ResourceType,
     isZoomEnable: Boolean = false,
     val isAccessibleEnable: Boolean = false,
-    ) {
+    val textExtractor: PdfTextExtractor? = null,
+) {
+    internal val effectiveTextExtractor: PdfTextExtractor?
+        get() = if (isAccessibleEnable) textExtractor else null
+
     internal var mError by mutableStateOf<Throwable?>(null)
     val error: Throwable?
         get() = mError

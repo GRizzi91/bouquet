@@ -56,6 +56,7 @@ kotlin {
 
 dependencies {
     implementation(project(":bouquet"))
+    implementation(project(":bouquet-text"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.core.ktx)
