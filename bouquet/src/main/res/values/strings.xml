@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility description of a page when no text extractor is configured. -->
+    <string name="bouquet_page_description">Page %1$d of %2$d</string>
+</resources>
