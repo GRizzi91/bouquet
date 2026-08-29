@@ -5,13 +5,16 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
         google()
         mavenCentral()
     }
 }
-rootProject.name = "ComposePDF"
-include ':app'
-include ':bouquet'
+
+rootProject.name = "bouquet"
+
+include(":bouquet")
+include(":sample")
