@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -34,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -144,12 +146,14 @@ fun ReaderScreen(
                 is com.rizzi.bouquet.VerticalPdfReaderState -> VerticalPdfReader(
                     state = state,
                     modifier = readerModifier,
+                    pageModifier = { Modifier.clip(RoundedCornerShape(8.dp)) },
                     pageSpacing = 8.dp,
                     error = { RetryableError(it, state) },
                 )
                 is com.rizzi.bouquet.HorizontalPdfReaderState -> HorizontalPdfReader(
                     state = state,
                     modifier = readerModifier,
+                    pageModifier = { Modifier.clip(RoundedCornerShape(8.dp)) },
                     pageSpacing = 16.dp,
                     error = { RetryableError(it, state) },
                 )

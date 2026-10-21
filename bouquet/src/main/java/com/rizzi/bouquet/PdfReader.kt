@@ -53,6 +53,7 @@ public fun VerticalPdfReader(
     loading: @Composable BoxScope.(PdfLoadState) -> Unit = { PdfReaderDefaults.Loading(it) },
     error: @Composable BoxScope.(PdfException) -> Unit = { PdfReaderDefaults.Error(it) },
     pagePlaceholder: @Composable (pageIndex: Int) -> Unit = { PdfReaderDefaults.PagePlaceholder() },
+    pageModifier: (index: Int) -> Modifier = { Modifier },
 ) {
     PdfDocumentEffect(state)
     PdfReaderFrame(state, modifier, loading, error) { document, viewport ->
@@ -74,7 +75,8 @@ public fun VerticalPdfReader(
         ) {
             items(count = document.pageCount, key = { it }) { index ->
                 val size = rememberPageLayoutSize(document, index, fitWidth = pageWidth, fitHeight = null)
-                PdfPageItem(state, document, index, size, pagePlaceholder)
+                val modifier = pageModifier(index)
+                PdfPageItem(state, document, index, size, pagePlaceholder, modifier)
             }
         }
     }
@@ -101,6 +103,7 @@ public fun HorizontalPdfReader(
     loading: @Composable BoxScope.(PdfLoadState) -> Unit = { PdfReaderDefaults.Loading(it) },
     error: @Composable BoxScope.(PdfException) -> Unit = { PdfReaderDefaults.Error(it) },
     pagePlaceholder: @Composable (pageIndex: Int) -> Unit = { PdfReaderDefaults.PagePlaceholder() },
+    pageModifier: (index: Int) -> Modifier = { Modifier },
 ) {
     PdfDocumentEffect(state)
     PdfReaderFrame(state, modifier, loading, error) { document, viewport ->
@@ -131,7 +134,8 @@ public fun HorizontalPdfReader(
         ) { index ->
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val size = rememberPageLayoutSize(document, index, fitWidth = pageAreaWidth, fitHeight = pageAreaHeight)
-                PdfPageItem(state, document, index, size, pagePlaceholder)
+                val modifier = pageModifier(index)
+                PdfPageItem(state, document, index, size, pagePlaceholder, modifier)
             }
         }
     }
