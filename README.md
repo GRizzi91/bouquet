@@ -141,16 +141,25 @@ VerticalPdfReader(
     modifier = Modifier.fillMaxSize().background(Color(0xFFEEEEEE)),
     contentPadding = PaddingValues(16.dp),
     pageSpacing = 12.dp,
+    pageModifier = Modifier.clip(RoundedCornerShape(8.dp)),
     loading = { CircularProgressIndicator(Modifier.align(Alignment.Center)) },
     error = { e -> Text(e.message ?: "Error", Modifier.align(Alignment.Center)) },
     pagePlaceholder = { Box(Modifier.fillMaxSize().background(Color.White)) },
 )
 ```
 
+`pageModifier` is applied to every page. Pages keep the size the reader computes for them, so use
+it to decorate them (clip, border, shadow, `graphicsLayer`), not to resize them.
+
 ### A single page (thumbnails, previews)
 
 ```kotlin
-PdfPage(state = state, pageIndex = 0, modifier = Modifier.width(96.dp))
+PdfPage(
+    state = state,
+    pageIndex = 0,
+    modifier = Modifier.width(96.dp),
+    pageModifier = Modifier.clip(RoundedCornerShape(4.dp)),
+)
 ```
 
 Readers and `PdfPage`s can share one state; the document stays open while any of them is shown.
