@@ -23,10 +23,10 @@ re-rendered crisp at the zoom level you are looking at.
 
 ```kotlin
 dependencies {
-    implementation("io.github.grizzi91:bouquet:2.0.0")
+    implementation("io.github.grizzi91:bouquet:2.1.0")
 
     // Optional: text extraction (PDFBox) for TalkBack descriptions and search
-    implementation("io.github.grizzi91:bouquet-text:2.0.0")
+    implementation("io.github.grizzi91:bouquet-text:2.1.0")
 }
 ```
 
