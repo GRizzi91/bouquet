@@ -151,9 +151,8 @@ private fun SourceCard(
                 PdfPage(
                     state = state,
                     pageIndex = 0,
-                    modifier = Modifier
-                        .width(56.dp)
-                        .clip(MaterialTheme.shapes.small),
+                    modifier = Modifier.width(56.dp),
+                    pageModifier = Modifier.clip(MaterialTheme.shapes.small),
                 )
                 Spacer(Modifier.width(16.dp))
             }

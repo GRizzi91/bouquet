@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0 — 2026-10-22
+
+### Added
+- `pageModifier` on `VerticalPdfReader`, `HorizontalPdfReader` and `PdfPage` to decorate every
+  page, e.g. rounded corners or a `graphicsLayer` effect (#64, idea from #63).
+
 ## 2.0.0 — 2026-08-29
 
 A rewrite of the rendering engine and a clean-up of the public API. See [MIGRATION.md](MIGRATION.md).

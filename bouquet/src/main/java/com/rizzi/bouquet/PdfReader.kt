@@ -40,6 +40,8 @@ import com.rizzi.bouquet.internal.rememberPageLayoutSize
  *
  * @param contentPadding padding around the whole list of pages.
  * @param pageSpacing gap between consecutive pages.
+ * @param pageModifier applied to every page. Pages keep the size the reader gives them, so use it
+ * to decorate them (clip, border, shadow, graphicsLayer), not to resize them.
  * @param loading shown while the document is downloading or opening.
  * @param error shown when the document could not be opened; call [PdfReaderState.retry] from it.
  * @param pagePlaceholder drawn in place of a page until its bitmap is ready.
@@ -50,6 +52,7 @@ public fun VerticalPdfReader(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     pageSpacing: Dp = 0.dp,
+    pageModifier: Modifier = Modifier,
     loading: @Composable BoxScope.(PdfLoadState) -> Unit = { PdfReaderDefaults.Loading(it) },
     error: @Composable BoxScope.(PdfException) -> Unit = { PdfReaderDefaults.Error(it) },
     pagePlaceholder: @Composable (pageIndex: Int) -> Unit = { PdfReaderDefaults.PagePlaceholder() },
@@ -74,7 +77,7 @@ public fun VerticalPdfReader(
         ) {
             items(count = document.pageCount, key = { it }) { index ->
                 val size = rememberPageLayoutSize(document, index, fitWidth = pageWidth, fitHeight = null)
-                PdfPageItem(state, document, index, size, pagePlaceholder)
+                PdfPageItem(state, document, index, size, pagePlaceholder, pageModifier)
             }
         }
     }
@@ -88,6 +91,8 @@ public fun VerticalPdfReader(
  *
  * @param contentPadding padding applied to every page.
  * @param pageSpacing gap between consecutive pages.
+ * @param pageModifier applied to every page. Pages keep the size the reader gives them, so use it
+ * to decorate them (clip, border, shadow, graphicsLayer), not to resize them.
  * @param loading shown while the document is downloading or opening.
  * @param error shown when the document could not be opened; call [PdfReaderState.retry] from it.
  * @param pagePlaceholder drawn in place of a page until its bitmap is ready.
@@ -98,6 +103,7 @@ public fun HorizontalPdfReader(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     pageSpacing: Dp = 0.dp,
+    pageModifier: Modifier = Modifier,
     loading: @Composable BoxScope.(PdfLoadState) -> Unit = { PdfReaderDefaults.Loading(it) },
     error: @Composable BoxScope.(PdfException) -> Unit = { PdfReaderDefaults.Error(it) },
     pagePlaceholder: @Composable (pageIndex: Int) -> Unit = { PdfReaderDefaults.PagePlaceholder() },
@@ -131,7 +137,7 @@ public fun HorizontalPdfReader(
         ) { index ->
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val size = rememberPageLayoutSize(document, index, fitWidth = pageAreaWidth, fitHeight = pageAreaHeight)
-                PdfPageItem(state, document, index, size, pagePlaceholder)
+                PdfPageItem(state, document, index, size, pagePlaceholder, pageModifier)
             }
         }
     }
@@ -143,12 +149,16 @@ public fun HorizontalPdfReader(
  * can share the same state; the document stays open while any of them is in the composition.
  *
  * @param pageIndex 0-based page to show.
+ * @param modifier applied to the area the page is fitted into, which can be larger than the page.
+ * @param pageModifier applied to the page itself. The page keeps the size it is fitted to, so use
+ * it to decorate it (clip, border, shadow, graphicsLayer), not to resize it.
  */
 @Composable
 public fun PdfPage(
     state: PdfReaderState,
     pageIndex: Int,
     modifier: Modifier = Modifier,
+    pageModifier: Modifier = Modifier,
     loading: @Composable BoxScope.(PdfLoadState) -> Unit = { PdfReaderDefaults.Loading(it) },
     error: @Composable BoxScope.(PdfException) -> Unit = { PdfReaderDefaults.Error(it) },
     pagePlaceholder: @Composable (pageIndex: Int) -> Unit = { PdfReaderDefaults.PagePlaceholder() },
@@ -163,7 +173,7 @@ public fun PdfPage(
                 val fitWidth = if (constraints.hasBoundedWidth) constraints.maxWidth else window.width
                 val fitHeight = if (constraints.hasBoundedHeight) constraints.maxHeight else null
                 val size = rememberPageLayoutSize(document, pageIndex, fitWidth, fitHeight)
-                PdfPageItem(state, document, pageIndex, size, pagePlaceholder)
+                PdfPageItem(state, document, pageIndex, size, pagePlaceholder, pageModifier)
             } else {
                 loading(loadState)
             }

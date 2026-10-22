@@ -82,9 +82,12 @@ internal fun PdfPageItem(
 
     val description = rememberPageDescription(state, document, pageIndex)
 
+    // The caller's modifier goes inside the size: it can decorate the page but never resize it,
+    // so the reader's layout and zoom math stay valid.
     Box(
-        modifier = modifier
+        modifier = Modifier
             .size(dpSize)
+            .then(modifier)
             .semantics { contentDescription = description },
     ) {
         val current = bitmap
