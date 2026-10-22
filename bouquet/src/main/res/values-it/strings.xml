@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bouquet_page_description">Pagina %1$d di %2$d</string>
+</resources>
